@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       # Menggunakan Docker image khusus build Android
-      - image: xyzuan/xdocker:latest
+      - image: nestingdev/hyper:latest
     steps:
       - checkout
       
