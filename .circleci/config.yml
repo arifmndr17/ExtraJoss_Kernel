@@ -2,21 +2,21 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: cimg/ubuntu:22.04
-    resource_class: large
+      - image: ubuntu:22.04
     steps:
       - checkout
       
       - run:
           name: Install Dependensi Build
           command: |
-            sudo apt-get update
-            sudo apt-get install -y git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update
+            apt-get install -y tzdata
+            apt-get install -y git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip
             
       - run:
           name: Clone Toolchain & AnyKernel3
           command: |
-            # Mengunduh compiler dan AnyKernel3 milik Anda
             git clone --depth=1 https://github.com/arifmndr17/Hyper-Clang -b master toolchain
             git clone --depth=1 https://github.com/arifmndr17/AnyKernel3 -b master AK3
             
@@ -27,14 +27,12 @@ jobs:
             export ARCH=arm64
             export SUBARCH=arm64
             
-            # Konfigurasi khusus Asus Zenfone Max M2
             make O=out X01AD_defconfig 
             make O=out -j$(nproc --all) CC=clang CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-
             
       - run:
           name: Pemaketan AnyKernel3 (Zip Flashable)
           command: |
-            # Membungkus kernel menjadi file zip siap flash
             cp out/arch/arm64/boot/Image.gz-dtb AK3/
             cd AK3
             zip -r9 ../Flashable-Kernel-X01AD.zip * -x .git README.md *placeholder
@@ -42,7 +40,6 @@ jobs:
       - run:
           name: Kirim Hasil ke Telegram
           command: |
-            # Mengecek apakah file zip berhasil dibuat, lalu mengirimnya ke bot
             if [ -f Flashable-Kernel-X01AD.zip ]; then
               echo "Mengirim file ke Telegram..."
               curl -F chat_id="${TELEGRAM_CHAT_ID}" \
